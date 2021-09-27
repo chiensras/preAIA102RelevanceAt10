@@ -1,0 +1,66 @@
+SELECT DISTINCT * FROM (
+SELECT *,
+CASE
+   WHEN H_IsActualFilingDatePreAIA = 1 THEN 1
+   WHEN H_IsDomesticPriorityDatePreAIA = 1 THEN 1
+   WHEN H_IsForeignPriorityDatePreAIA = 1 THEN 1
+   ELSE 0 END AS H_IsPreAIA,
+CASE
+   WHEN PV_IsActualFilingDatePreAIA = 1 THEN 1
+   WHEN PV_IsDomesticPriorityDatePreAIA = 1 THEN 1
+   WHEN PV_IsForeignPriorityDatePreAIA = 1 THEN 1
+   ELSE 0 END AS PV_IsPreAIA
+FROM (
+SELECT
+Harrity.first_patent AS H_First_Patent_No,
+Harrity.first_patent_filing_date AS H_Filing_Date,
+Harrity.earliest_related_document_filing_date AS H_Dom_Priority_Date,
+Harrity.earliest_foreign_priority_filing_date AS H_For_Priority_Date,
+PV_BQ.First_Patent_No AS PV_First_Patent_No,
+PV_BQ.App_Filing_Date AS PV_Filing_Date,
+PV_BQ.Priority_Date AS PV_Dom_Priority_Date,
+PV_BQ.FP_Date AS PV_For_Priority_Date,
+CAST(
+   CASE
+       WHEN SAFE.PARSE_DATE("%m/%d/%Y", Harrity.first_patent_filing_date) < '2013-03-16'
+           OR Harrity.first_patent_filing_date = '#N/A'
+           THEN 1
+       ELSE 0
+   END AS INT) AS H_IsActualFilingDatePreAIA,
+CAST(
+   CASE
+       WHEN SAFE.PARSE_DATE("%m/%d/%Y", Harrity.earliest_related_document_filing_date) < '2013-03-16'
+           OR Harrity.earliest_related_document_filing_date = '#N/A'
+           THEN 1
+       ELSE 0
+   END AS INT) AS H_IsDomesticPriorityDatePreAIA,
+CAST(
+   CASE
+       WHEN SAFE.PARSE_DATE("%m/%d/%Y", Harrity.earliest_foreign_priority_filing_date) < '2013-03-16'
+           OR Harrity.earliest_foreign_priority_filing_date = '#N/A'
+           THEN 1
+       ELSE 0
+   END AS INT) AS H_IsForeignPriorityDatePreAIA,
+CAST(
+   CASE
+       WHEN CAST(PV_BQ.App_Filing_Date AS DATE) < '2013-03-16'
+           THEN 1
+       ELSE 0
+   END AS INT) AS PV_IsActualFilingDatePreAIA,
+CAST(
+   CASE
+       WHEN CAST(PV_BQ.Priority_Date AS DATE) < '2013-03-16'
+           THEN 1
+       ELSE 0
+   END AS INT) AS PV_IsDomesticPriorityDatePreAIA,
+CAST(
+   CASE
+       WHEN CAST(PV_BQ.FP_Date AS DATE) < '2013-03-16'
+           THEN 1
+       ELSE 0
+   END AS INT) AS PV_IsForeignPriorityDatePreAIA
+FROM  chiens-databases.Obie.PreAIA102Relevance_Litigations AS Harrity
+INNER JOIN chiens-databases.Obie.PreAIA102Relevance_LitigationsPlusDates AS PV_BQ
+ ON PV_BQ.First_Patent_No = Harrity.first_patent
+WHERE Harrity.Year > '2012') AS H_PV)
+WHERE H_IsPreAIA <> PV_IsPreAIA;
