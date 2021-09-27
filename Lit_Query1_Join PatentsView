@@ -1,0 +1,32 @@
+SELECT
+   Litigated_Ps.Year AS Litigation_Year,
+   Litigated_Ps.Patents AS Litigated_Patent_Nos,
+   Litigated_Ps.first_patent AS First_Patent_No,
+   PV_As.number AS App_No,
+   PV_As.date AS App_Filing_Date,
+   PV_Ps.date AS Patent_Grant_Date,
+   PV_Pubs.publication_date AS Pubs_Pub_Date,
+   CONCAT(
+       LEFT(CAST(PV_Pubs.priority_date AS STRING),4),'-',
+       SUBSTR(CAST(PV_Pubs.priority_date AS STRING),5,2),'-',
+       RIGHT(CAST(PV_Pubs.priority_date AS STRING),2)) AS Priority_Date,
+   PV_FP.minDate AS FP_Date
+FROM  chiens-databases.Obie.PreAIA102Relevance_Litigations AS Litigated_Ps
+LEFT JOIN patents-public-data.patentsview.patent AS PV_Ps
+ ON Litigated_Ps.first_patent = PV_Ps.number
+LEFT JOIN patents-public-data.patentsview.application AS PV_As
+ ON PV_Ps.id = PV_As.patent_id
+LEFT JOIN (
+ SELECT min(date) minDate, patent_id
+ FROM patents-public-data.patentsview.foreign_priority AS PV_FP
+ GROUP BY patent_id
+) AS PV_FP
+ ON PV_Ps.id = PV_FP.patent_id
+LEFT JOIN patents-public-data.patentsview.match AS PV_M
+ ON PV_M.patent_id = PV_Ps.id
+LEFT JOIN patents-public-data.patents.publications AS PV_Pubs
+ ON PV_M.publication_number = PV_Pubs.publication_number
+WHERE
+ CAST(Litigated_Ps.Year AS INT) > 2012
+ AND Litigated_Ps.Patents IS NOT NULL
+ AND SAFE_CAST(Litigated_Ps.first_patent AS INT) IS NOT NULL;
