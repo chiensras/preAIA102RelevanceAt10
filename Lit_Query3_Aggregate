@@ -1,0 +1,17 @@
+SELECT
+ Litigation_Year,
+ COUNT(Case_Counter) AS TotalCases,
+ SUM(CASE
+     WHEN IsActualFilingDatePreAIA = 1 THEN 1
+     WHEN IsDomesticPriorityDatePreAIA = 1 THEN 1
+     WHEN IsForeignPriorityDatePreAIA = 1 THEN 1
+   ELSE
+   0
+ END
+   ) AS IsPreAIA
+FROM
+ chiens-databases.Obie.LitigationsPlusDateCount AS Litigated_Ps
+GROUP BY
+ Litigation_Year
+ORDER BY
+ Litigation_Year
