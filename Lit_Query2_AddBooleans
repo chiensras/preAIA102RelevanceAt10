@@ -1,0 +1,26 @@
+SELECT
+   Litigation_Year,
+   Patent_No,
+   App_Filing_Date,
+   Priority_Date,
+   FP_Date,
+   1 AS Case_Counter,
+   CAST(
+       CASE
+           WHEN CAST(App_Filing_Date AS DATE) < '2013-03-16'
+               THEN 1
+           ELSE 0
+       END AS INT) as IsActualFilingDatePreAIA,
+   CAST(
+       CASE
+           WHEN CAST(Priority_Date AS DATE) < '2013-03-16'
+               THEN 1
+           ELSE 0
+       END AS INT) as IsDomesticPriorityDatePreAIA,
+   CAST(
+       CASE
+           WHEN CAST(FP_Date AS DATE) < '2013-03-16'
+               THEN 1
+           ELSE 0
+       END AS INT) as IsForeignPriorityDatePreAIA
+FROM  chiens-databases.Obie.PreAIA102Relevance_LitigationsPlusDates AS Litigated_Ps
